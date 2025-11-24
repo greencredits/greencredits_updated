@@ -1,0 +1,10 @@
+[
+  {
+    "id": "SA-001",
+    "name": "Chief Municipal Officer",
+    "email": "cmo@gonda.gov.in",
+    "password": "SuperAdmin@2025",
+    "role": "super_admin",
+    "createdAt": "2025-11-16T09:00:00.000Z"
+  }
+]

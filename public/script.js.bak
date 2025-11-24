@@ -1,0 +1,281 @@
+/* Utilities */
+const $ = (sel) => document.querySelector(sel);
+const $$ = (sel) => Array.from(document.querySelectorAll(sel));
+
+/* --- NAVIGATION --- */
+function scrollToSection(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+function scrollToTop() {
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+/* Navbar shrink */
+const header = $("#siteHeader");
+window.addEventListener("scroll", () => {
+  if (window.scrollY > 30) header.classList.add("scrolled");
+  else header.classList.remove("scrolled");
+});
+
+/* Small screen hamburger */
+function attachHamburger() {
+  const hamburger = $("#hamburger");
+  if (hamburger) {
+    hamburger.addEventListener("click", () => {
+      const nav = document.querySelector(".main-nav");
+      nav.style.display = nav.style.display === "flex" ? "" : "flex";
+    });
+  }
+}
+
+/* --- APP TABS --- */
+$$(".app-tab").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    $$(".app-tab").forEach((b) => b.classList.remove("active"));
+    btn.classList.add("active");
+
+    const target = btn.dataset.tab;
+    $$(".app-panel").forEach((p) => p.classList.remove("active"));
+    const panel = document.getElementById(target);
+    if (panel) panel.classList.add("active");
+  });
+});
+
+/* --- REPORT FORM --- */
+const useLocationBtn = $("#useLocationBtn");
+const clearLocationBtn = $("#clearLocationBtn");
+const locInput = $("#reportLocation");
+
+if (useLocationBtn) {
+  useLocationBtn.addEventListener("click", () => {
+    if (!navigator.geolocation) {
+      alert("Geolocation not supported");
+      return;
+    }
+    useLocationBtn.textContent = "Locating...";
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const lat = pos.coords.latitude.toFixed(5);
+        const lng = pos.coords.longitude.toFixed(5);
+        locInput.value = `${lat}, ${lng}`;
+        locInput.dataset.isCoords = "true";
+        locInput.readOnly = true;
+        useLocationBtn.textContent = "Location set";
+      },
+      () => {
+        alert("Unable to fetch location");
+        useLocationBtn.textContent = "Use My Location";
+      }
+    );
+  });
+}
+if (clearLocationBtn) {
+  clearLocationBtn.addEventListener("click", () => {
+    locInput.value = "";
+    locInput.dataset.isCoords = "false";
+    locInput.readOnly = false;
+    useLocationBtn.textContent = "Use My Location";
+  });
+}
+
+async function submitReportForm(e) {
+  e.preventDefault();
+
+  // check login before allowing report
+  const resCheck = await fetch("/api/myreports");
+  if (resCheck.status === 401) {
+    openLogin();
+    alert("You must log in to submit a report.");
+    return;
+  }
+
+  const photo = $("#reportPhoto").files[0];
+  const desc = $("#reportDesc").value.trim();
+  const locValue = locInput.value.trim();
+
+  if (!photo) {
+    alert("Please upload a photo.");
+    return;
+  }
+
+  const fd = new FormData();
+  fd.append("photo", photo);
+  fd.append("description", desc);
+
+  if (locInput.dataset.isCoords === "true") {
+    const [lat, lng] = locValue.split(",");
+    fd.append("lat", parseFloat(lat));
+    fd.append("lng", parseFloat(lng));
+  } else {
+    fd.append("address", locValue);
+  }
+
+  const res = await fetch("/api/report", { method: "POST", body: fd });
+  const data = await res.json();
+
+  if (data.success) {
+    alert("Report submitted successfully!");
+    clearReportForm();
+    loadMyReports();
+  } else {
+    alert("Error: " + data.message);
+  }
+}
+
+function clearReportForm() {
+  $("#reportPhoto").value = "";
+  $("#reportDesc").value = "";
+  locInput.value = "";
+  locInput.dataset.isCoords = "false";
+  locInput.readOnly = false;
+}
+
+/* --- MODALS --- */
+const loginModal = $("#loginModal");
+const signupModal = $("#signupModal");
+const backdrop = $("#modalBackdrop");
+
+function openLogin() {
+  loginModal.style.display = "block";
+  signupModal.style.display = "none";
+  backdrop.hidden = false;
+}
+function openSignup() {
+  signupModal.style.display = "block";
+  loginModal.style.display = "none";
+  backdrop.hidden = false;
+}
+function closeModal() {
+  loginModal.style.display = "none";
+  signupModal.style.display = "none";
+  backdrop.hidden = true;
+}
+if (backdrop) backdrop.addEventListener("click", closeModal);
+
+/* --- LOGIN / SIGNUP --- */
+async function handleLogin(e) {
+  e.preventDefault();
+  const email = $("#loginEmail").value;
+  const password = $("#loginPassword").value;
+
+  const res = await fetch("/api/login", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, password }),
+  });
+  const data = await res.json();
+
+  if (data.success) {
+    closeModal();
+    updateUserUI(data.user);
+  } else {
+    alert(data.message || "Login failed");
+  }
+}
+
+async function handleSignup(e) {
+  e.preventDefault();
+  const name = $("#signupName").value;
+  const email = $("#signupEmail").value;
+  const password = $("#signupPassword").value;
+
+  const res = await fetch("/api/signup", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name, email, password }),
+  });
+  const data = await res.json();
+
+  if (data.success) {
+    closeModal();
+    updateUserUI(data.user);
+  } else {
+    alert(data.message || "Signup failed");
+  }
+}
+
+async function handleLogout() {
+  await fetch("/api/logout", { method: "POST" });
+  updateUserUI(null);
+}
+
+/* --- UI UPDATES --- */
+function attachAuthButtons() {
+  const loginBtn = $("#loginBtn");
+  const signupBtn = $("#signupBtn");
+  if (loginBtn) loginBtn.addEventListener("click", openLogin);
+  if (signupBtn) signupBtn.addEventListener("click", openSignup);
+  attachHamburger();
+}
+
+function updateUserUI(user) {
+  const headerActions = document.querySelector(".header-actions");
+  if (!headerActions) return;
+
+  if (user) {
+    headerActions.innerHTML = `
+      <span class="welcome">Welcome, ${user.name}</span>
+      <button class="btn btn-outline" id="logoutBtn">Logout</button>
+    `;
+    $("#logoutBtn").addEventListener("click", handleLogout);
+  } else {
+    headerActions.innerHTML = `
+      <button class="btn btn-outline" id="loginBtn">Login</button>
+      <button class="btn btn-primary" id="signupBtn">Sign Up</button>
+      <button class="hamburger" id="hamburger" aria-label="Open menu">
+        <span></span><span></span><span></span>
+      </button>
+    `;
+    attachAuthButtons();
+  }
+}
+
+/* --- REPORTS --- */
+async function loadMyReports() {
+  const res = await fetch("/api/myreports");
+  if (!res.ok) return;
+  const data = await res.json();
+
+  const el = $("#reportsList");
+  if (!el) return;
+  el.innerHTML = "";
+
+  if (data.reports && data.reports.length > 0) {
+    data.reports.forEach((r) => {
+      const item = document.createElement("div");
+      item.className = "report-item";
+      item.innerHTML = `
+        <div>
+          <div style="font-weight:600">${r.description || "(No description)"}</div>
+          <div style="font-size:13px;color:#6b7a72">${r.date} · ${r.status}</div>
+        </div>
+      `;
+      el.appendChild(item);
+    });
+  } else {
+    el.innerHTML = "<p>No reports yet.</p>";
+  }
+}
+
+/* --- INIT --- */
+document.addEventListener("DOMContentLoaded", async () => {
+  attachAuthButtons();
+  attachHamburger();
+
+  // check if already logged in
+  const res = await fetch("/api/myreports");
+  if (res.status === 200) {
+    const data = await res.json();
+    if (data.user) updateUserUI(data.user);
+  }
+
+  $$(".nav-link").forEach((a) => {
+    a.addEventListener("click", (ev) => {
+      ev.preventDefault();
+      const href = a.getAttribute("href").replace("#", "");
+      if (href) scrollToSection(href);
+    });
+  });
+});

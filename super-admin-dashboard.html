@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Super Admin Dashboard - GreenCredits</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f7fa;
+        }
+        .navbar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .navbar h1 {
+            font-size: 24px;
+        }
+        .navbar button {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        .navbar button:hover {
+            background: rgba(255,255,255,0.3);
+        }
+        .container {
+            max-width: 1200px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .stat-card {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .stat-card h3 {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+        .stat-card .number {
+            font-size: 32px;
+            font-weight: bold;
+            color: #667eea;
+        }
+        .section {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .section h2 {
+            margin-bottom: 20px;
+            color: #333;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #666;
+        }
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+        .badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .badge.pending { background: #fef3cd; color: #856404; }
+        .badge.approved { background: #d4edda; color: #155724; }
+        .badge.rejected { background: #f8d7da; color: #721c24; }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <h1>🌱 Super Admin Dashboard</h1>
+        <div>
+            <span id="adminName" style="margin-right: 20px;"></span>
+            <button onclick="logout()">Logout</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="stats">
+            <div class="stat-card">
+                <h3>Total Reports</h3>
+                <div class="number" id="totalReports">-</div>
+            </div>
+            <div class="stat-card">
+                <h3>Pending Reports</h3>
+                <div class="number" id="pendingReports">-</div>
+            </div>
+            <div class="stat-card">
+                <h3>Total Officers</h3>
+                <div class="number" id="totalOfficers">-</div>
+            </div>
+            <div class="stat-card">
+                <h3>Total Workers</h3>
+                <div class="number" id="totalWorkers">-</div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Recent Reports</h2>
+            <div id="reportsTable">
+                <div class="loading">Loading reports...</div>
+            </div>
+        </div>
+    </div>
+
+   <script>
+    // Check if logged in
+    async function checkAuth() {
+        try {
+            const response = await fetch('/api/super-admin/me');
+            if (!response.ok) {
+                window.location.href = '/super-admin-login.html';
+                return;
+            }
+            const data = await response.json();
+            document.getElementById('adminName').textContent = data.name || data.email;
+        } catch (error) {
+            console.error('Auth check failed:', error);
+            window.location.href = '/super-admin-login.html';
+        }
+    }
+
+    // Load dashboard data
+    async function loadDashboard() {
+        try {
+            // Load stats
+            const statsResponse = await fetch('/api/super-admin/stats');
+            const statsData = await statsResponse.json();
+            
+            if (statsData.success) {
+                document.getElementById('totalReports').textContent = statsData.totalReports || 0;
+                document.getElementById('pendingReports').textContent = statsData.pendingReports || 0;
+                document.getElementById('totalOfficers').textContent = statsData.totalOfficers || 0;
+                document.getElementById('totalWorkers').textContent = statsData.totalWorkers || 0;
+            }
+
+            // Load reports
+            const reportsResponse = await fetch('/api/super-admin/reports');
+            const reportsData = await reportsResponse.json();
+            
+            console.log('Reports data:', reportsData); // Debug log
+            
+            if (reportsData.success && reportsData.reports) {
+                displayReports(reportsData.reports);
+            } else {
+                displayReports([]);
+            }
+        } catch (error) {
+            console.error('Error loading dashboard:', error);
+            displayReports([]);
+        }
+    }
+
+    function displayReports(reports) {
+        const container = document.getElementById('reportsTable');
+        
+        if (!reports || reports.length === 0) {
+            container.innerHTML = '<p style="text-align:center;color:#999;padding:20px;">No reports found. Users haven\'t submitted any reports yet.</p>';
+            return;
+        }
+
+        let html = `
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>User</th>
+                        <th>Zone</th>
+                        <th>Waste Type</th>
+                        <th>Location</th>
+                        <th>Status</th>
+                        <th>Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+        `;
+
+        reports.slice(0, 20).forEach((report, index) => {
+            const userName = report.userId ? (report.userId.name || report.userId.email || 'Unknown') : 'N/A';
+            const location = report.location?.address || report.location?.coordinates?.join(', ') || 'N/A';
+            const date = new Date(report.createdAt || report.timestamp).toLocaleDateString('en-IN');
+            
+            html += `
+                <tr>
+                    <td>#${index + 1}</td>
+                    <td>${userName}</td>
+                    <td>${report.zone || 'Unassigned'}</td>
+                    <td>${report.wasteType || report.type || 'N/A'}</td>
+                    <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;">${location}</td>
+                    <td><span class="badge ${report.status}">${report.status || 'pending'}</span></td>
+                    <td>${date}</td>
+                </tr>
+            `;
+        });
+
+        html += '</tbody></table>';
+        container.innerHTML = html;
+    }
+
+    async function logout() {
+        try {
+            await fetch('/api/super-admin/logout', { method: 'POST' });
+        } catch (error) {
+            console.error('Logout error:', error);
+        }
+        window.location.href = '/super-admin-login.html';
+    }
+
+    // Initialize
+    checkAuth();
+    loadDashboard();
+    
+    // Auto-refresh every 30 seconds
+    setInterval(loadDashboard, 30000);
+</script>
+
+</body>
+</html>

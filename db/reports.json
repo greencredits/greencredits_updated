@@ -1,0 +1,24 @@
+[
+  {
+    "id": 2,
+    "userId": 1,
+    "description": "",
+    "address": null,
+    "lat": 27.13319,
+    "lng": 81.98791,
+    "photoUrl": "/uploads/1758012250204-Screenshot.png",
+    "date": "2025-09-16T08:44:10.206Z",
+    "status": "Resolved"
+  },
+  {
+    "id": 1,
+    "userId": 1,
+    "description": "",
+    "address": null,
+    "lat": 27.13318,
+    "lng": 81.98794,
+    "photoUrl": "/uploads/1758012165572-Screenshot.png",
+    "date": "2025-09-16T08:42:45.578Z",
+    "status": "Resolved"
+  }
+]

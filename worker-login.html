@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Worker Login - GreenCredits</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .login-card {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 400px;
+            width: 90%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        
+        .logo {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .logo-icon {
+            font-size: 4rem;
+            margin-bottom: 10px;
+        }
+        
+        h1 {
+            color: #111827;
+            font-size: 1.8rem;
+            margin-bottom: 5px;
+        }
+        
+        .subtitle {
+            color: #6b7280;
+            font-size: 0.9rem;
+        }
+        
+        .badge {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            display: inline-block;
+            margin-top: 10px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #374151;
+            font-weight: 600;
+        }
+        
+        input {
+            width: 100%;
+            padding: 12px 14px;
+            border: 2px solid #e5e7eb;
+            border-radius: 10px;
+            font-size: 1rem;
+        }
+        
+        input:focus {
+            outline: none;
+            border-color: #10b981;
+        }
+        
+        .btn-login {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        
+        .btn-login:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(16,185,129,0.4);
+        }
+        
+        .note {
+            background: #dbeafe;
+            border: 2px solid #3b82f6;
+            border-radius: 10px;
+            padding: 12px;
+            margin-top: 20px;
+            text-align: center;
+            font-size: 0.85rem;
+            color: #1e40af;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-card">
+        <div class="logo">
+            <div class="logo-icon">👷</div>
+            <h1>Worker Login</h1>
+            <p class="subtitle">GreenCredits Field Operations</p>
+            <div class="badge">🔐 WORKER ACCESS</div>
+        </div>
+        
+        <form id="workerLoginForm">
+            <div class="form-group">
+                <label>Email</label>
+                <input 
+                    type="tel" 
+                    id="workerEmail" 
+                    placeholder="ramesh@gonda.gov.in"
+                    required
+                >
+            </div>
+            
+            <div class="form-group">
+                <label>Password</label>
+                <input 
+                    type="password" 
+                    id="workerPassword" 
+                    placeholder="Enter your password"
+                    required
+                >
+            </div>
+            
+            <button type="submit" class="btn-login">
+                🔓 Login to Dashboard
+            </button>
+        </form>
+        
+        <div class="note">
+            📝 Use your existing worker account from admin.html
+        </div>
+    </div>
+    
+    <script>
+        document.getElementById('workerLoginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const email = document.getElementById('workerEmail').value;
+            const password = document.getElementById('workerPassword').value;
+            
+            try {
+                const response = await fetch('/api/admin/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ email, password })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success && data.admin.role === 'cleanup_worker') {
+                    alert('✅ Login successful!');
+                    window.location.href = '/admin.html'; // Redirect to admin page
+                } else if (data.success) {
+                    alert('❌ This login is only for workers. Use admin.html for other roles.');
+                } else {
+                    alert('❌ Invalid credentials');
+                }
+            } catch (error) {
+                alert('❌ Login failed. Please try again.');
+            }
+        });
+    </script>
+</body>
+</html>

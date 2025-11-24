@@ -1,0 +1,42 @@
+[
+  {
+    "id": "ZONE-1",
+    "name": "Zone 1 - North Gonda",
+    "areas": ["Station Road", "Civil Lines", "Railway Colony", "Medical College Road"],
+    "color": "#3b82f6",
+    "population": 25000,
+    "area_km2": 8.5
+  },
+  {
+    "id": "ZONE-2",
+    "name": "Zone 2 - South Gonda",
+    "areas": ["Colonelganj", "Mankapur", "Katra", "Tehsil Road"],
+    "color": "#10b981",
+    "population": 30000,
+    "area_km2": 10.2
+  },
+  {
+    "id": "ZONE-3",
+    "name": "Zone 3 - East Gonda",
+    "areas": ["Paraspur", "Itiathok", "Wazirganj Road", "Bypass Road"],
+    "color": "#f59e0b",
+    "population": 22000,
+    "area_km2": 7.8
+  },
+  {
+    "id": "ZONE-4",
+    "name": "Zone 4 - West Gonda",
+    "areas": ["Bahraich Road", "Wazirganj", "Jhilahi", "Industrial Area"],
+    "color": "#ef4444",
+    "population": 28000,
+    "area_km2": 9.5
+  },
+  {
+    "id": "ZONE-5",
+    "name": "Zone 5 - Central Gonda",
+    "areas": ["City Center", "Kotwali", "Sadar Bazaar", "Nagar Palika"],
+    "color": "#8b5cf6",
+    "population": 35000,
+    "area_km2": 6.5
+  }
+]

@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Admin Login</title>
+  <style>
+    body { font-family: Arial; background: linear-gradient(135deg, #667eea, #764ba2); min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+    .box { background: white; padding: 40px; border-radius: 20px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); width: 400px; }
+    h1 { text-align: center; color: #10b981; }
+    input { width: 100%; padding: 15px; margin: 10px 0; border: 2px solid #ddd; border-radius: 10px; font-size: 16px; }
+    button { width: 100%; padding: 15px; background: #10b981; color: white; border: none; border-radius: 10px; font-size: 18px; font-weight: bold; cursor: pointer; margin-top: 20px; }
+    button:hover { background: #059669; }
+    .error { background: #fee; color: #c00; padding: 10px; border-radius: 5px; margin: 10px 0; display: none; }
+  </style>
+</head>
+<body>
+  <div class="box">
+    <h1>🔐 Admin Login</h1>
+    <div id="error" class="error"></div>
+    <form id="form">
+      <input type="email" id="email" placeholder="Email" value="admin@greencredits.com" required>
+      <input type="password" id="password" placeholder="Password" value="admin123" required>
+      <button type="submit">Login</button>
+    </form>
+  </div>
+  <script>
+    document.getElementById('form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = e.target.querySelector('button');
+      btn.disabled = true;
+      btn.textContent = 'Logging in...';
+      
+      try {
+        const res = await fetch('/api/admin/login', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          credentials: 'include',
+          body: JSON.stringify({
+            email: document.getElementById('email').value,
+            password: document.getElementById('password').value
+          })
+        });
+        const data = await res.json();
+        
+        if (data.success) {
+          window.location.href = '/admin.html';
+        } else {
+          document.getElementById('error').textContent = data.error || 'Login failed';
+          document.getElementById('error').style.display = 'block';
+          btn.disabled = false;
+          btn.textContent = 'Login';
+        }
+      } catch (err) {
+        document.getElementById('error').textContent = 'Server error';
+        document.getElementById('error').style.display = 'block';
+        btn.disabled = false;
+        btn.textContent = 'Login';
+      }
+    });
+  </script>
+</body>
+</html>
